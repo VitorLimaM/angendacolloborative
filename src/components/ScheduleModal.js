@@ -3,15 +3,12 @@
 import { useState, useEffect } from 'react'
 import { X, Clock, Calendar, FileText } from 'lucide-react'
 
-const DAYS = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo']
-
 const HOURS = Array.from({ length: 24 }, (_, i) => {
   const h = String(i).padStart(2, '0')
   return `${h}:00`
 })
 
 export default function ScheduleModal({ isOpen, onClose, onSave, initialData }) {
-  const [day, setDay]             = useState(initialData?.day || 'Segunda')
   const [startTime, setStartTime] = useState(initialData?.startTime || '09:00')
   const [endTime, setEndTime]     = useState(initialData?.endTime || '10:00')
   const [reason, setReason]       = useState(initialData?.reason || '')
@@ -20,10 +17,9 @@ export default function ScheduleModal({ isOpen, onClose, onSave, initialData }) 
 
   useEffect(() => {
     if (initialData) {
-      setDay(initialData.day)
-      setStartTime(initialData.startTime)
-      setEndTime(initialData.endTime)
-      setReason(initialData.reason)
+      setStartTime(initialData.startTime || '09:00')
+      setEndTime(initialData.endTime || '10:00')
+      setReason(initialData.reason || '')
     }
   }, [initialData])
 
@@ -34,7 +30,12 @@ export default function ScheduleModal({ isOpen, onClose, onSave, initialData }) 
 
     setSaving(true)
     try {
-      await onSave({ day, startTime, endTime, reason: reason.trim() })
+      await onSave({
+        dateKey:   initialData?.dateKey,
+        startTime,
+        endTime,
+        reason: reason.trim(),
+      })
       onClose()
     } catch (e) {
       setError(e.message)
@@ -53,9 +54,13 @@ export default function ScheduleModal({ isOpen, onClose, onSave, initialData }) 
         <div className="flex items-center justify-between p-6 border-b border-surface-600">
           <div>
             <h2 className="text-white font-semibold text-lg">
-              {initialData ? 'Editar compromisso' : 'Novo compromisso'}
+              {initialData?.startTime ? 'Editar compromisso' : 'Novo compromisso'}
             </h2>
-            <p className="text-zinc-400 text-xs mt-0.5">Informe quando você estará ocupado</p>
+            <p className="text-zinc-400 text-xs mt-0.5">
+              {initialData?.dateKey
+                ? `${new Date(initialData.dateKey + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}`
+                : 'Informe quando você estará ocupado'}
+            </p>
           </div>
           <button
             onClick={onClose}
@@ -72,21 +77,6 @@ export default function ScheduleModal({ isOpen, onClose, onSave, initialData }) 
               {error}
             </p>
           )}
-
-          {/* Dia */}
-          <div>
-            <label className="flex items-center gap-1.5 text-zinc-300 text-sm font-medium mb-1.5">
-              <Calendar size={14} /> Dia da semana
-            </label>
-            <select
-              value={day}
-              onChange={(e) => setDay(e.target.value)}
-              className="w-full bg-surface-700 border border-surface-500 text-white rounded-lg px-3 py-2.5 text-sm
-                         focus:outline-none focus:border-brand-500 transition-colors"
-            >
-              {DAYS.map((d) => <option key={d} value={d}>{d}</option>)}
-            </select>
-          </div>
 
           {/* Horários */}
           <div className="grid grid-cols-2 gap-3">
@@ -149,7 +139,7 @@ export default function ScheduleModal({ isOpen, onClose, onSave, initialData }) 
             className="px-5 py-2 bg-brand-600 hover:bg-brand-500 disabled:opacity-50 text-white text-sm font-semibold
                        rounded-lg transition-colors"
           >
-            {saving ? 'Salvando...' : (initialData ? 'Salvar alterações' : 'Adicionar')}
+            {saving ? 'Salvando...' : (initialData?.startTime ? 'Salvar alterações' : 'Adicionar')}
           </button>
         </div>
       </div>
