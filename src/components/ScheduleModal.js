@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react'
 import { X, Clock, Calendar, FileText } from 'lucide-react'
 
-const HOURS = Array.from({ length: 24 }, (_, i) => {
-  const h = String(i).padStart(2, '0')
-  return `${h}:00`
+const HOURS = Array.from({ length: 48 }, (_, i) => {
+  const h = String(Math.floor(i / 2)).padStart(2, '0')
+  const m = i % 2 === 0 ? '00' : '30'
+  return `${h}:${m}`
 })
 
 export default function ScheduleModal({ isOpen, onClose, onSave, initialData }) {

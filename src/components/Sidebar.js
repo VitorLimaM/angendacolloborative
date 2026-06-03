@@ -5,18 +5,39 @@ import { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useRouter } from 'next/navigation'
 
+const COLORS = [
+  { name: 'violet',  bg: 'bg-violet-500',  label: 'Roxo' },
+  { name: 'emerald', bg: 'bg-emerald-500', label: 'Verde' },
+  { name: 'amber',   bg: 'bg-amber-500',   label: 'Amarelo' },
+  { name: 'rose',    bg: 'bg-rose-500',    label: 'Rosa' },
+  { name: 'cyan',    bg: 'bg-cyan-500',    label: 'Ciano' },
+  { name: 'pink',    bg: 'bg-pink-500',    label: 'Pink' },
+  { name: 'indigo',  bg: 'bg-indigo-500',  label: 'Índigo' },
+  { name: 'orange',  bg: 'bg-orange-500',  label: 'Laranja' },
+  { name: 'teal',    bg: 'bg-teal-500',    label: 'Teal' },
+  { name: 'red',     bg: 'bg-red-500',     label: 'Vermelho' },
+]
+
 export default function Sidebar() {
-  const { user, logout } = useAuth()
+  const { user, logout, updateColor } = useAuth()
   const router = useRouter()
   const [open, setOpen] = useState(false)
+  const [showColors, setShowColors] = useState(false)
 
   const handleLogout = async () => {
     await logout()
     router.push('/auth')
   }
 
+  const handleColorChange = async (colorName) => {
+    await updateColor(colorName)
+    setShowColors(false)
+  }
+
   const initials = (user?.displayName || user?.name || 'U')
     .split(' ').slice(0, 2).map((n) => n[0]).join('').toUpperCase()
+
+  const currentColor = COLORS.find((c) => c.name === user?.color) || COLORS[0]
 
   const content = (
     <div className="flex flex-col h-full">
@@ -42,12 +63,36 @@ export default function Sidebar() {
         </a>
       </nav>
 
+      {/* Seletor de cor */}
+      {showColors && (
+        <div className="px-3 pb-2">
+          <p className="text-zinc-500 text-xs font-medium mb-2 px-1">Sua cor na agenda:</p>
+          <div className="grid grid-cols-5 gap-1.5">
+            {COLORS.map((color) => (
+              <button
+                key={color.name}
+                onClick={() => handleColorChange(color.name)}
+                title={color.label}
+                className={`w-7 h-7 rounded-full ${color.bg} transition-transform hover:scale-110
+                            ${user?.color === color.name ? 'ring-2 ring-white ring-offset-1 ring-offset-surface-800' : ''}`}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* User footer */}
       <div className="p-3 border-t border-surface-600">
-        <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg hover:bg-surface-600 transition-colors cursor-default">
-          <div className="w-7 h-7 rounded-full bg-brand-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
-            {initials}
-          </div>
+        <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg hover:bg-surface-600 transition-colors">
+          <button
+            onClick={() => setShowColors(!showColors)}
+            title="Trocar cor"
+            className="shrink-0"
+          >
+            <div className={`w-7 h-7 rounded-full ${currentColor.bg} flex items-center justify-center text-white text-xs font-bold`}>
+              {initials}
+            </div>
+          </button>
           <div className="flex-1 min-w-0">
             <p className="text-white text-xs font-medium truncate">
               {user?.displayName || user?.name || 'Usuário'}
@@ -62,6 +107,7 @@ export default function Sidebar() {
             <LogOut size={14} />
           </button>
         </div>
+        <p className="text-zinc-600 text-xs text-center mt-1">Clique no avatar para trocar a cor</p>
       </div>
     </div>
   )
@@ -73,7 +119,7 @@ export default function Sidebar() {
         {content}
       </aside>
 
-      {/* Mobile: hamburguer */}
+      {/* Mobile */}
       <div className="lg:hidden">
         <button
           onClick={() => setOpen(true)}

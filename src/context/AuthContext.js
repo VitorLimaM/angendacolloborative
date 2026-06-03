@@ -8,7 +8,7 @@ import {
   signOut,
   updateProfile,
 } from 'firebase/auth'
-import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore'
+import { doc, setDoc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore'
 import { auth, db } from '../lib/firebase'
 
 const AuthContext = createContext(null)
@@ -28,24 +28,21 @@ export function AuthProvider({ children }) {
       }
       setLoading(false)
     })
-
     return () => unsubscribe()
   }, [])
 
   const signup = async (email, password, name) => {
     const credential = await createUserWithEmailAndPassword(auth, email, password)
     const { uid } = credential.user
-
     await updateProfile(credential.user, { displayName: name })
-
     await setDoc(doc(db, 'users', uid), {
       uid,
       name,
       email,
+      color: 'violet',
       avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=6366f1&color=fff`,
       createdAt: serverTimestamp(),
     })
-
     return credential.user
   }
 
@@ -54,8 +51,14 @@ export function AuthProvider({ children }) {
 
   const logout = () => signOut(auth)
 
+  const updateColor = async (color) => {
+    if (!user) return
+    await updateDoc(doc(db, 'users', user.uid), { color })
+    setUser((prev) => ({ ...prev, color }))
+  }
+
   return (
-    <AuthContext.Provider value={{ user, loading, signup, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, signup, login, logout, updateColor }}>
       {children}
     </AuthContext.Provider>
   )
